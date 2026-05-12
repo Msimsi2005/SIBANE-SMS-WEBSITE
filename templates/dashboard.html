@@ -1,0 +1,295 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard — Sibane ECD Academy{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- ── Header ──────────────────────────────────────────── -->
+<div class="d-flex align-items-center justify-content-between mb-4">
+  <div>
+    <h4 style="font-weight:700;margin:0;color:var(--gray-800)">Good day 👋</h4>
+    <p style="margin:0;font-size:13px;color:var(--gray-400)">{{ today|date:"l, j F Y" }} &nbsp;·&nbsp; Harare, Zimbabwe</p>
+  </div>
+  <a href="{% url 'attendance_mark' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-calendar-check me-1"></i> Mark Attendance
+  </a>
+</div>
+
+<!-- ── Stat Cards ──────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Active Students</div>
+        <div class="stat-value">{{ total_students }}</div>
+        <div class="stat-sub">Enrolled this term</div>
+      </div>
+      <div class="stat-icon" style="background:#dbeafe;color:#1d4ed8">
+        <i class="bi bi-people-fill"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Present Today</div>
+        <div class="stat-value" style="color:#16a34a">{{ present_today }}</div>
+        <div class="stat-sub">{{ absent_today }} absent</div>
+      </div>
+      <div class="stat-icon" style="background:#dcfce7;color:#16a34a">
+        <i class="bi bi-calendar-check-fill"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Fees This Month</div>
+        <div class="stat-value">${{ fees_this_month|floatformat:0 }}</div>
+        <div class="stat-sub">Collected payments</div>
+      </div>
+      <div class="stat-icon" style="background:#fef9c3;color:#a16207">
+        <i class="bi bi-cash-coin"></i>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Expenses This Month</div>
+        <div class="stat-value">${{ expenses_this_month|floatformat:0 }}</div>
+        <div class="stat-sub">Total outgoings</div>
+      </div>
+      <div class="stat-icon" style="background:#fee2e2;color:#b91c1c">
+        <i class="bi bi-receipt-cutoff"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Charts Row ──────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <!-- Attendance donut -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">Today's Attendance</div>
+      <div class="card-body d-flex align-items-center justify-content-center" style="padding:24px">
+        {% if total_marked_today %}
+          <div style="position:relative;width:160px;height:160px">
+            <canvas id="attendanceChart"></canvas>
+            <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+              <span style="font-size:28px;font-weight:700;color:var(--gray-800)">{{ present_today }}</span>
+              <span style="font-size:11px;color:var(--gray-400)">present</span>
+            </div>
+          </div>
+        {% else %}
+          <div style="text-align:center;color:var(--gray-400);padding:20px">
+            <i class="bi bi-calendar-x" style="font-size:36px;display:block;margin-bottom:10px;opacity:.4"></i>
+            <p style="margin:0;font-size:13px">No attendance marked yet.</p>
+            <a href="{% url 'attendance_mark' %}" class="btn btn-primary btn-sm mt-3">Mark Now</a>
+          </div>
+        {% endif %}
+      </div>
+      {% if total_marked_today %}
+      <div style="padding:0 18px 18px;display:flex;gap:12px">
+        <div style="flex:1;text-align:center;background:#dcfce7;border-radius:8px;padding:8px">
+          <div style="font-size:20px;font-weight:700;color:#15803d">{{ present_today }}</div>
+          <div style="font-size:11px;color:#15803d">Present</div>
+        </div>
+        <div style="flex:1;text-align:center;background:#fee2e2;border-radius:8px;padding:8px">
+          <div style="font-size:20px;font-weight:700;color:#b91c1c">{{ absent_today }}</div>
+          <div style="font-size:11px;color:#b91c1c">Absent</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Students by class bar chart -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">Students by Class</div>
+      <div class="card-body" style="padding:20px">
+        <canvas id="classChart" height="160"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alerts panel -->
+  <div class="col-md-4">
+    <div class="card h-100">
+      <div class="card-header">Alerts & Notices</div>
+      <div class="card-body" style="padding:0">
+        {% if low_stock_items %}
+        <div style="padding:12px 16px;border-bottom:1px solid var(--gray-100)">
+          <div style="font-size:12.5px;font-weight:600;color:#b91c1c;margin-bottom:6px">
+            <i class="bi bi-exclamation-triangle-fill me-1"></i>{{ low_stock_count }} Low Stock Item{{ low_stock_count|pluralize }}
+          </div>
+          {% for item in low_stock_items %}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:12.5px;border-bottom:1px solid var(--gray-100)">
+            <span>{{ item.name }}</span>
+            <span class="badge badge-absent">{{ item.quantity }} {{ item.unit }}</span>
+          </div>
+          {% endfor %}
+          <a href="{% url 'inventory_list' %}" style="font-size:12px;color:var(--brand);text-decoration:none;display:block;margin-top:6px">View all inventory →</a>
+        </div>
+        {% endif %}
+
+        {% if overdue_borrows %}
+        <div style="padding:12px 16px;border-bottom:1px solid var(--gray-100)">
+          <div style="font-size:12.5px;font-weight:600;color:#a16207">
+            <i class="bi bi-book me-1"></i>{{ overdue_borrows }} Overdue Book{{ overdue_borrows|pluralize }}
+          </div>
+          <a href="{% url 'borrow_list' %}?active=1" style="font-size:12px;color:var(--brand);text-decoration:none">View overdue borrows →</a>
+        </div>
+        {% endif %}
+
+        {% if not low_stock_items and not overdue_borrows %}
+        <div style="text-align:center;padding:32px 16px;color:var(--gray-400)">
+          <i class="bi bi-check-circle-fill" style="font-size:32px;color:#22c55e;display:block;margin-bottom:8px"></i>
+          <p style="margin:0;font-size:13px">Everything looks good!</p>
+        </div>
+        {% endif %}
+
+        <!-- Quick actions -->
+        <div style="padding:12px 16px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:8px">Quick Actions</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <a href="{% url 'student_add' %}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:var(--gray-50);border:1px solid var(--gray-200);text-decoration:none;color:var(--gray-600);font-size:13px;transition:all .15s" onmouseover="this.style.background='var(--brand-light)'" onmouseout="this.style.background='var(--gray-50)'">
+              <i class="bi bi-person-plus-fill text-brand"></i> Enroll New Student
+            </a>
+            <a href="{% url 'payment_add' %}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:var(--gray-50);border:1px solid var(--gray-200);text-decoration:none;color:var(--gray-600);font-size:13px;transition:all .15s" onmouseover="this.style.background='var(--brand-light)'" onmouseout="this.style.background='var(--gray-50)'">
+              <i class="bi bi-cash-coin text-brand"></i> Record Payment
+            </a>
+            <a href="{% url 'expense_add' %}" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:7px;background:var(--gray-50);border:1px solid var(--gray-200);text-decoration:none;color:var(--gray-600);font-size:13px;transition:all .15s" onmouseover="this.style.background='var(--brand-light)'" onmouseout="this.style.background='var(--gray-50)'">
+              <i class="bi bi-receipt-cutoff text-brand"></i> Add Expense
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Tables Row ──────────────────────────────────────── -->
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        Recent Payments
+        <a href="{% url 'payment_add' %}" class="btn btn-primary btn-sm">+ Add</a>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Student</th>
+              <th>Type</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in recent_payments %}
+            <tr>
+              <td class="ps-4">
+                <a href="{% url 'student_detail' p.student.pk %}" style="text-decoration:none;font-weight:500;color:var(--gray-800)">{{ p.student.full_name }}</a>
+              </td>
+              <td><span class="badge badge-neutral">{{ p.get_payment_type_display }}</span></td>
+              <td style="font-weight:600;color:#16a34a">${{ p.amount }}</td>
+              <td style="color:var(--gray-400)">{{ p.date }}</td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row"><td colspan="4">No payments recorded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header">
+        Recent Expenses
+        <a href="{% url 'expense_add' %}" class="btn btn-primary btn-sm">+ Add</a>
+      </div>
+      <div class="card-body" style="padding:0">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th class="ps-4">Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for e in recent_expenses %}
+            <tr>
+              <td class="ps-4" style="font-weight:500">{{ e.description|truncatechars:28 }}</td>
+              <td><span class="badge badge-neutral">{{ e.get_category_display }}</span></td>
+              <td style="font-weight:600;color:#b91c1c">${{ e.amount }}</td>
+              <td style="color:var(--gray-400)">{{ e.date }}</td>
+            </tr>
+            {% empty %}
+            <tr class="empty-row"><td colspan="4">No expenses recorded yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Attendance donut
+{% if total_marked_today %}
+new Chart(document.getElementById('attendanceChart'), {
+  type: 'doughnut',
+  data: {
+    datasets: [{
+      data: [{{ present_today }}, {{ absent_today }}],
+      backgroundColor: ['#16a34a', '#ef4444'],
+      borderWidth: 0,
+      hoverOffset: 4
+    }]
+  },
+  options: {
+    cutout: '72%',
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    animation: { animateRotate: true, duration: 800 }
+  }
+});
+{% endif %}
+
+// Students by class bar
+new Chart(document.getElementById('classChart'), {
+  type: 'bar',
+  data: {
+    labels: [{% for label, count in students_by_class.items %}'{{ label }}'{% if not forloop.last %},{% endif %}{% endfor %}],
+    datasets: [{
+      data: [{% for label, count in students_by_class.items %}{{ count }}{% if not forloop.last %},{% endif %}{% endfor %}],
+      backgroundColor: ['#16a34a', '#3b82f6', '#f59e0b'],
+      borderRadius: 6, borderSkipped: false
+    }]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: {
+        beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } },
+        grid: { color: '#f1f5f9' }
+      },
+      x: { ticks: { font: { size: 12 } }, grid: { display: false } }
+    }
+  }
+});
+</script>
+{% endblock %}

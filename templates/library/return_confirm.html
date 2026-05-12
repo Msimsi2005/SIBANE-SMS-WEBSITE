@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% block title %}Return Book{% endblock %}
+{% block page_title %}Return Book{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header text-success"><i class="bi bi-arrow-return-left me-2"></i>Confirm Return</div>
+      <div class="card-body text-center py-4">
+        <i class="bi bi-book-fill text-success" style="font-size:3rem"></i>
+        <h5 class="mt-3">{{ borrow.book.title }}</h5>
+        <p class="text-muted">Borrowed by <strong>{{ borrow.student.full_name }}</strong> on {{ borrow.borrow_date }}</p>
+        <form method="post" class="d-inline">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-success me-2">
+            <i class="bi bi-check-lg me-1"></i>Confirm Return (Today)
+          </button>
+          <a href="{% url 'borrow_list' %}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

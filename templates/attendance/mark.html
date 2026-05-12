@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load core_filters %}
+{% block title %}Mark Attendance{% endblock %}
+{% block page_title %}Mark Attendance{% endblock %}
+
+{% block content %}
+<!-- Date + Class Selector -->
+<div class="card mb-3">
+  <div class="card-body py-2">
+    <form method="get" class="row g-2 align-items-end">
+      <div class="col-sm-4">
+        <label class="form-label small fw-semibold">Date</label>
+        <input type="date" name="date" value="{{ selected_date }}" class="form-control form-control-sm">
+      </div>
+      <div class="col-sm-4">
+        <label class="form-label small fw-semibold">Class</label>
+        <select name="class_level" class="form-select form-select-sm">
+          {% for code, label in class_levels %}
+          <option value="{{ code }}" {% if selected_class == code %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-sm-2">
+        <button type="submit" class="btn btn-sm btn-primary w-100">Load</button>
+      </div>
+      <div class="col-sm-2">
+        <a href="{% url 'attendance_history' %}" class="btn btn-sm btn-outline-secondary w-100">History</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Attendance Form -->
+{% if students %}
+<div class="card">
+  <div class="card-header">
+    <span>{{ selected_date }} — {{ selected_class|title }}</span>
+    <span class="badge" style="background:#e8f5e9;color:#1b5e20">{{ students.count }} student{{ students.count|pluralize }}</span>
+  </div>
+  <div class="card-body p-0">
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="date" value="{{ selected_date }}">
+      <input type="hidden" name="class_level" value="{{ selected_class }}">
+
+      <!-- Quick all-present button -->
+      <div class="px-3 py-2 border-bottom bg-light d-flex gap-2">
+        <button type="button" class="btn btn-sm btn-outline-success" onclick="setAll('present')">
+          ✓ All Present
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger" onclick="setAll('absent')">
+          ✗ All Absent
+        </button>
+      </div>
+
+      <table class="table align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="ps-3">#</th>
+            <th>Student</th>
+            <th>Present</th>
+            <th>Late</th>
+            <th>Absent</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for student in students %}
+          {% with existing_record=existing|get_item:student.pk %}
+          <tr id="row-{{ student.pk }}">
+            <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+            <td class="fw-semibold">{{ student.full_name }}</td>
+            <td>
+              <input type="radio" name="status_{{ student.pk }}" value="present"
+                     class="form-check-input status-radio" data-row="{{ student.pk }}"
+                     {% if existing_record.status == 'present' or not existing_record %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="radio" name="status_{{ student.pk }}" value="late"
+                     class="form-check-input status-radio" data-row="{{ student.pk }}"
+                     {% if existing_record.status == 'late' %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="radio" name="status_{{ student.pk }}" value="absent"
+                     class="form-check-input status-radio" data-row="{{ student.pk }}"
+                     {% if existing_record.status == 'absent' %}checked{% endif %}>
+            </td>
+            <td>
+              <input type="text" name="notes_{{ student.pk }}"
+                     value="{{ existing_record.notes|default:'' }}"
+                     class="form-control form-control-sm" placeholder="Optional note" style="max-width:180px">
+            </td>
+          </tr>
+          {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+      <div class="px-3 py-3 border-top">
+        <button type="submit" class="btn btn-primary">
+          <i class="bi bi-save me-1"></i>Save Attendance
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="alert alert-info">No active students in this class.</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function setAll(status) {
+  document.querySelectorAll(`input[type=radio][value="${status}"]`).forEach(r => r.checked = true);
+  updateRowColors();
+}
+function updateRowColors() {
+  document.querySelectorAll('[id^="row-"]').forEach(row => {
+    const pk = row.id.split('-')[1];
+    const checked = row.querySelector(`input[name="status_${pk}"]:checked`);
+    row.style.background = checked?.value === 'absent' ? '#fff5f5'
+                         : checked?.value === 'late'   ? '#fffde7' : '';
+  });
+}
+document.querySelectorAll('.status-radio').forEach(r => r.addEventListener('change', updateRowColors));
+updateRowColors();
+</script>
+{% endblock %}

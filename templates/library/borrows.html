@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Borrows{% endblock %}
+{% block page_title %}Library — Borrow Records{% endblock %}
+
+{% block content %}
+<div class="d-flex gap-2 mb-3">
+  <a href="{% url 'borrow_list' %}?active=1" class="btn btn-sm {% if active_only %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    Active Only
+  </a>
+  <a href="{% url 'borrow_list' %}" class="btn btn-sm {% if not active_only %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+    All Records
+  </a>
+  <a href="{% url 'borrow_book' %}" class="btn btn-sm btn-success ms-auto">+ New Borrow</a>
+</div>
+
+<div class="card">
+  <div class="card-header"><span>Borrow Records ({{ borrows|length }})</span></div>
+  <div class="card-body p-0">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th class="ps-3">Book</th>
+          <th>Student</th>
+          <th>Borrowed</th>
+          <th>Due</th>
+          <th>Status</th>
+          <th class="text-end pe-3">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in borrows %}
+        <tr>
+          <td class="ps-3 fw-semibold">{{ b.book.title }}</td>
+          <td>
+            <a href="{% url 'student_detail' b.student.pk %}" class="text-decoration-none">{{ b.student.full_name }}</a>
+          </td>
+          <td>{{ b.borrow_date }}</td>
+          <td>{{ b.due_date }}</td>
+          <td>
+            {% if b.is_returned %}
+              <span class="badge badge-present">Returned {{ b.return_date }}</span>
+            {% elif b.is_overdue %}
+              <span class="badge badge-absent">Overdue</span>
+            {% else %}
+              <span class="badge badge-late">Out</span>
+            {% endif %}
+          </td>
+          <td class="text-end pe-3">
+            {% if not b.is_returned %}
+            <a href="{% url 'return_book' b.pk %}" class="btn btn-sm btn-outline-success">
+              <i class="bi bi-arrow-return-left me-1"></i>Return
+            </a>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="text-center text-muted py-4">No borrow records.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

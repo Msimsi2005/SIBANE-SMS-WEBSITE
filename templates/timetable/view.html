@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% load core_filters %}
+{% block title %}Timetable{% endblock %}
+{% block page_title %}Timetable{% endblock %}
+
+{% block content %}
+<!-- Class selector -->
+<div class="d-flex gap-2 align-items-center mb-3 flex-wrap">
+  {% for code, label in class_levels %}
+  <a href="?class_level={{ code }}"
+     class="btn btn-sm {% if selected_class == code %}btn-primary{% else %}btn-outline-primary{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+  <a href="{% url 'timetable_add' %}" class="btn btn-sm btn-success ms-auto">+ Add Entry</a>
+</div>
+
+<!-- Grid -->
+<div class="card">
+  <div class="card-header">
+    Timetable — {{ selected_class|title }}
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-bordered align-middle mb-0 text-center" style="min-width:700px">
+        <thead style="background:#e8f5e9">
+          <tr>
+            <th style="min-width:140px">Period / Time</th>
+            {% for day in days %}
+            <th>{{ day }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for pcode, plabel in periods %}
+          <tr>
+            <td class="fw-semibold small text-start ps-2" style="background:#f8faf8">{{ plabel }}</td>
+            {% for day in days %}
+            <td>
+              {% with cell=grid|dict_get:day %}
+              {% with entry=cell|dict_get:pcode %}
+              {% if entry %}
+                <div class="small fw-semibold">{{ entry.subject }}</div>
+                {% if entry.teacher %}
+                  <div class="text-muted" style="font-size:.73rem">{{ entry.teacher.full_name }}</div>
+                {% endif %}
+                <a href="{% url 'timetable_delete' entry.pk %}" class="text-danger" style="font-size:.7rem">✕</a>
+              {% else %}
+                <span class="text-muted small">—</span>
+              {% endif %}
+              {% endwith %}
+              {% endwith %}
+            </td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

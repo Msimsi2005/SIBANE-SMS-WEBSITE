@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Meal Records{% endblock %}
+{% block page_title %}Meals{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span>Meal Records</span>
+    <a href="{% url 'meal_add' %}" class="btn btn-sm btn-primary">+ Record Meals</a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="ps-3">Date</th>
+            <th>Class</th>
+            <th class="text-center">🌅 Breakfast</th>
+            <th class="text-center">🍽 Lunch</th>
+            <th class="text-center">🍎 Snack</th>
+            <th>Total Meals</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="ps-3 fw-semibold">{{ r.date }}</td>
+            <td>{{ r.get_class_level_display }}</td>
+            <td class="text-center">{{ r.breakfast_count }}</td>
+            <td class="text-center">{{ r.lunch_count }}</td>
+            <td class="text-center">{{ r.snack_count }}</td>
+            <td class="fw-bold">{{ r.breakfast_count|add:r.lunch_count|add:r.snack_count }}</td>
+            <td class="text-muted">{{ r.notes|truncatechars:40|default:"—" }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No meal records found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

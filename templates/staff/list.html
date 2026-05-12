@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Staff{% endblock %}
+{% block page_title %}Staff{% endblock %}
+
+{% block content %}
+<div class="card">
+  <div class="card-header">
+    <span>Staff Members ({{ staff|length }})</span>
+    <a href="{% url 'staff_add' %}" class="btn btn-sm btn-primary">
+      <i class="bi bi-person-plus-fill me-1"></i>Add Staff
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th class="ps-3">#</th>
+            <th>Name</th>
+            <th>Role</th>
+            <th>Contact</th>
+            <th>Email</th>
+            <th>Join Date</th>
+            <th class="text-end pe-3">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in staff %}
+          <tr>
+            <td class="ps-3 text-muted">{{ forloop.counter }}</td>
+            <td class="fw-semibold">{{ m.full_name }}</td>
+            <td>
+              <span class="badge" style="background:#e8f5e9;color:#1b5e20">{{ m.get_role_display }}</span>
+            </td>
+            <td>{{ m.contact }}</td>
+            <td>{{ m.email|default:"—" }}</td>
+            <td>{{ m.join_date }}</td>
+            <td class="text-end pe-3">
+              <a href="{% url 'staff_edit' m.pk %}" class="btn btn-sm btn-outline-secondary me-1">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'staff_delete' m.pk %}" class="btn btn-sm btn-outline-danger">
+                <i class="bi bi-archive"></i>
+              </a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="7" class="text-center text-muted py-4">No staff members found.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

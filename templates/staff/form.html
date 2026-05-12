@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">{{ title }}</div>
+      <div class="card-body">
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <div class="row g-3">
+            <div class="col-sm-6">
+              <label class="form-label">First Name *</label>
+              {{ form.first_name }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Last Name *</label>
+              {{ form.last_name }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Role *</label>
+              {{ form.role }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Contact *</label>
+              {{ form.contact }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Email</label>
+              {{ form.email }}
+            </div>
+            <div class="col-sm-6">
+              <label class="form-label">Join Date *</label>
+              {{ form.join_date }}
+            </div>
+            <div class="col-12">
+              <label class="form-label">Qualification</label>
+              {{ form.qualification }}
+            </div>
+            <div class="col-12">
+              <div class="form-check">
+                {{ form.is_active }}
+                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active</label>
+              </div>
+            </div>
+          </div>
+          <div class="mt-4 d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Save</button>
+            <a href="{% url 'staff_list' %}" class="btn btn-outline-secondary">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
